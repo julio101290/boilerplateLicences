@@ -1,6 +1,6 @@
 <?php
 
-namespace julio101290\boilerplateslicences\Models;
+namespace julio101290\boilerplatelicences\Models;
 use CodeIgniter\Model;
 
 class LicenciasModel extends Model {

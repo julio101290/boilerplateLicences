@@ -47,9 +47,60 @@ class LicenciasController extends BaseController {
 
 
         if ($this->request->isAJAX()) {
-            $datos = $this->licencias->mdlGetLicencias($empresasID);
+         
+            $request = service('request');
 
-            return \Hermawan\DataTables\DataTable::of($datos)->toJson(true);
+            $searchValue = $request->getGet('search')['value'] ?? '';
+            $orderColumn = $request->getGet('order')[0]['column'] ?? 0;
+            $orderDir = $request->getGet('order')[0]['dir'] ?? 'asc';
+            $start = $request->getGet('start') ?? 0;
+            $length = $request->getGet('length') ?? 10;
+            $columns = $request->getGet('columns');
+
+            // Columnas válidas para ordenar (asegúrate que coincidan con las seleccionadas en el SELECT)
+            $columnMap = [
+                0 => 'a.descripcion',
+                1 => 'a.licencia',
+                2 => 'a.desdeFecha',
+                3 => 'a.hastaFecha',
+                4 => 'a.claveModulo',
+                5 => 'b.nombre'
+            ];
+
+            $builder = $this->licencias->mdlGetLicencias($empresasID);
+
+            // Búsqueda
+            if (!empty($searchValue)) {
+                $builder->groupStart()
+                        ->like('a.descripcion', $searchValue)
+                        ->orLike('a.licencia', $searchValue)
+                        ->orLike('a.claveModulo', $searchValue)
+                        ->orLike('b.nombre', $searchValue)
+                        ->groupEnd();
+            }
+
+            // Conteo total sin filtros
+            $totalBuilder = clone $builder;
+            $totalRecords = $totalBuilder->countAllResults(false);
+
+            // Ordenamiento
+            if (isset($columnMap[$orderColumn])) {
+                $builder->orderBy($columnMap[$orderColumn], $orderDir);
+            }
+
+            // Paginación
+            $builder->limit($length, $start);
+
+            // Obtener datos filtrados
+            $data = $builder->get()->getResultArray();
+
+            // Respuesta en formato JSON compatible con DataTables
+            return $this->response->setJSON([
+                        'draw' => (int) $request->getGet('draw'),
+                        'recordsTotal' => $totalRecords,
+                        'recordsFiltered' => $totalRecords, // si quieres, puedes hacer otro count si aplicas filtro
+                        'data' => $data
+            ]);
         }
         $titulos["title"] = lang('licencias.title');
         $titulos["subtitle"] = lang('licencias.subtitle');
@@ -76,17 +127,16 @@ class LicenciasController extends BaseController {
 
 
         $idLicencias = $this->request->getPost("idLicencias");
-        
+
         $datosLicencias = $this->licencias->whereIn('idEmpresa', $empresasID)
                         ->where("id", $idLicencias)->first();
-        
+
         /**
          * Obtenemos los datos de la empresa
          * 
          */
-        
         $datosEmpresa = $this->empresa->find($datosLicencias["idEmpresa"]);
-        
+
         $datosLicencias["nombre"] = $datosEmpresa["nombre"];
         $datosLicencias["direccion"] = $datosEmpresa["direccion"];
         $datosLicencias["rfc"] = $datosEmpresa["rfc"];
@@ -96,10 +146,8 @@ class LicenciasController extends BaseController {
         $datosLicencias["razonSocial"] = $datosEmpresa["razonSocial"];
         $datosLicencias["codigoPostal"] = $datosEmpresa["codigoPostal"];
         $datosLicencias["CURP"] = $datosEmpresa["CURP"];
-        
+
         echo json_encode($datosLicencias);
-        
-        
     }
 
     /**
@@ -166,7 +214,7 @@ class LicenciasController extends BaseController {
     public function ctrValidarLicencia($cadena, $fecha, $claveModulo) {
 
         //$encriptarCadena = sha1($cadena . "degreelessnessModeOn");
-        
+
         $encriptarCadena = sha1($cadena . "DegreeLessnessMode_On");
 
         $licencia = $this->licencias->mdlObtenerLicencia($fecha, $claveModulo);

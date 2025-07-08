@@ -1,6 +1,6 @@
 <?php
 
-namespace julio101290\boilerplatesells\Commands;
+namespace julio101290\boilerplatelicences\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use Config\Database;
@@ -10,7 +10,7 @@ use CodeIgniter\CLI\CLI;
 /**
  * Class InstallCommand.
  */
-class InstallCommandsells extends BaseCommand
+class InstallCommandlicences extends BaseCommand
 {
     /**
      * The group the command is lumped under
