@@ -42,7 +42,7 @@
     "prefer-stable": true,
     "autoload": {
         "psr-4": {
-            "julio101290\\boilerplateprojects\\": "src"
+            "julio101290\\boilerplatelicences\\": "src"
         }
     },
     "autoload-dev": {
